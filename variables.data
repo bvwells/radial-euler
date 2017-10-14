@@ -13,4 +13,4 @@
    0.0         Right velocity state in shocktube experiment.
    0.1         Right pressure state in shocktube experiment.
    0.4         Radial distance of initial discontinuity in shocktube experiment.
-   3           Number of spatial dimensions
+   3           Geometric parameter [1] Cartesian, [2] cylindrical, [3] spherical coordinates.

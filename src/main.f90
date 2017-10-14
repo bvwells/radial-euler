@@ -8,14 +8,14 @@ program Euler
 
    implicit none
 !---------------------------------------------------------------------------------
-   integer :: nodes, count, order, lim_choice, ndim
+   integer :: nodes, count, order, lim_choice, alpha
    double precision, dimension(:, :), allocatable :: u
    double precision :: gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r
    double precision :: delta_t, delta_r, r_mid, T, output_t, CFL, CFL_step
 !---------------------------------------------------------------------------------
 
    call read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
-                       lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, ndim)
+                       lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, alpha)
 
    call validate_variables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
 
@@ -45,7 +45,7 @@ program Euler
 
       call Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
 
-      call ODE_solver(u, delta_r, gamma, delta_t, nodes, ndim)
+      call ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
 
    end do
 
@@ -239,26 +239,32 @@ subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
 
 end subroutine Riemann_solver
 
-subroutine ODE_solver(u, delta_r, gamma, delta_t, nodes, ndim)
+subroutine ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
 
    implicit none
 !--------------------------------------------------------------------------------
-   integer, intent(IN) :: nodes, ndim
+   integer, intent(IN) :: nodes, alpha
    double precision, intent(INOUT), dimension(-1:nodes, 1:3) :: u
    double precision, intent(IN) :: gamma, delta_r, delta_t
 !--------------------------------------------------------------------------------
-   double precision :: p
+   double precision, dimension(1:3) :: uold
+   double precision :: p, r
    integer :: i
 !--------------------------------------------------------------------------------
-   p = 0; 
+   p = 0; r = 0
    do i = 0, nodes - 1
 
+      r = 0.5*delta_r + i*delta_r
+      
       p = (gamma - 1.0)*(u(i, 3) - 0.5*((u(i, 2)**2)/u(i, 1)))
+      
+      uold(1) = u(i, 1)
+      uold(2) = u(i, 2)
+      uold(3) = u(i, 3)
 
-      u(i, 1) = u(i, 1) - dble(ndim - 1)*delta_t*(u(i, 2)/(0.5*delta_r + i*delta_r))
-      u(i, 2) = u(i, 2) - dble(ndim - 1)*delta_t*(((u(i, 2)**2)/u(i, 1))/(0.5*delta_r + i*delta_r))
-      u(i, 3) = u(i, 3) - dble(ndim - 1)*delta_t*(((u(i, 2)/u(i, 1))*(u(i, 3) + p))/(0.5*delta_r + i*delta_r))
-
+      u(i, 1) = u(i, 1) - dble(alpha - 1)*delta_t*(uold(2)/r)
+      u(i, 2) = u(i, 2) - dble(alpha - 1)*delta_t*(((uold(2)**2)/uold(1))/r)
+      u(i, 3) = u(i, 3) - dble(alpha - 1)*delta_t*((uold(2)/uold(1))*(uold(3) + p)/r)
    end do
 
    u(-1, 1) = u(0, 1)
@@ -368,12 +374,12 @@ subroutine write_solution(u, delta_r, gamma, nodes)
 end subroutine write_solution
 
 subroutine read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
-                          lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, ndim)
+                          lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, alpha)
    implicit none
 
 !---------------------------------------------------------------------------------
 ! GLOBALS VARIABLES
-   integer, intent(OUT) :: nodes, order, lim_choice, ndim
+   integer, intent(OUT) :: nodes, order, lim_choice, alpha
    double precision, intent(OUT) :: gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r
    double precision, intent(OUT) :: r_mid, output_t, CFL
 !---------------------------------------------------------------------------------
@@ -395,7 +401,7 @@ subroutine read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
    read (10, *) u_r
    read (10, *) p_r
    read (10, *) r_mid
-   read (10, *) ndim
+   read (10, *) alpha
 
    close (10)
 
