@@ -1,16 +1,16 @@
-   2000        nodes
-   0.0         r_min
-   1.0         r_max
-   1.4         gamma (ratio of Specific heats)
-   0.5         CFL condition
-   0.03        Output Time
-   2           order of approximation
-   1           choice of limiter [1] Superbee, [2] Minbee, [3] Van Leer
-   10.0        left density state
-   0.0         left velocity state
-   1000.0      left pressure state
-   1.0         right density state
-   0.0         right velocity state
-   0.1         right pressure state    
-   0.4         position of initial discontinuity
-   3           number of spatial dimensions
+   2000        Number of nodes in discretisation.
+   0.0         Minimum radius of domain.
+   1.0         Maximum radius of domain.
+   1.4         Ratio of specific heats for gas (Gamma)
+   0.5         CFL condition.
+   0.03        Output Time.
+   2           Order of approximation [1] first order, [2] second order TVD.
+   1           choice of limiter [1] Superbee, [2] Minbee, [3] Van Leer.
+   10.0        Left density state in shocktube experiment.
+   0.0         Left velocity state in shocktube experiment.
+   1000.0      Left pressure state in shocktube experiment.
+   1.0         Right density state in shocktube experiment.
+   0.0         Right velocity state in shocktube experiment.
+   0.1         Right pressure state in shocktube experiment.
+   0.4         Radial distance of initial discontinuity in shocktube experiment.
+   3           Number of spatial dimensions

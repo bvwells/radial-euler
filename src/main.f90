@@ -9,80 +9,47 @@ program Euler
    implicit none
 !---------------------------------------------------------------------------------
    integer :: nodes, count, order, lim_choice, ndim
-   double precision, dimension(:), allocatable :: u
+   double precision, dimension(:, :), allocatable :: u
    double precision :: gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r
    double precision :: delta_t, delta_r, r_mid, T, output_t, CFL, CFL_step
-   logical :: run
 !---------------------------------------------------------------------------------
 
-   open (unit=10, file='variables.data', status='old', form='formatted')
+   call read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
+                       lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, ndim)
 
-   read (10, *) nodes
-   read (10, *) r_min
-   read (10, *) r_max
-   read (10, *) gamma
-   read (10, *) cfl
-   read (10, *) output_t
-   read (10, *) order
-   read (10, *) lim_choice
-   read (10, *) rho_l
-   read (10, *) u_l
-   read (10, *) p_l
-   read (10, *) rho_r
-   read (10, *) u_r
-   read (10, *) p_r
-   read (10, *) r_mid
-   read (10, *) ndim
+   call validate_variables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
 
-   close (10)
+   T = 0; count = 1
+   allocate (u(-1:nodes, 1:3))
+   u = 0; delta_r = 0
 
-   run = .true.
+   call initial_conditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r, nodes, r_mid)
 
-   if (nodes < 2) run = .false.
-   if ((r_max - r_min) < 0.0) run = .false.
-   if ((r_mid <= r_min) .or. (r_mid >= r_max)) run = .false.
-   if (cfl < 0) run = .false.
-   if (output_t < 0) run = .false.
-   if ((order /= 1) .and. (order /= 2)) run = .false.
-   if ((lim_choice /= 1) .and. (lim_choice /= 2) .and. (lim_choice /= 3)) run = .false.
+   do while (t < output_t)
 
-   if (run) then
-      T = 0; count = 1
-      allocate (u(3*(nodes + 2)))
-      u = 0; delta_r = 0
+      if (count <= 5) then
+         CFL_step = 0.2*CFL
+      else
+         CFL_step = CFL
+      endif
+      count = count + 1
 
-      call initial_conditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r, nodes, r_mid)
+      call adaptive_time_step(delta_t, u, delta_r, nodes, gamma, CFL_step)
 
-      do while (t < output_t)
+      if (T + delta_t > output_T) then
+         delta_t = output_T - T
+      endif
 
-         if (count <= 5) then
-            CFL_step = 0.2*CFL
-         else
-            CFL_step = CFL
-         endif
+      T = T + delta_t
+      print *, T, delta_t
 
-         count = count + 1
+      call Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
 
-         call adaptive_time_step(delta_t, u, delta_r, nodes, gamma, CFL_step)
+      call ODE_solver(u, delta_r, gamma, delta_t, nodes, ndim)
 
-         if (T + delta_t > output_T) then
-            delta_t = output_T - T
-         endif
+   end do
 
-         T = T + delta_t
-         print *, T, delta_t
-
-         call Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
-
-         call ODE_solver(u, delta_r, gamma, delta_t, nodes, ndim)
-
-      end do
-
-      call write_solution(u, delta_r, gamma, nodes)
-
-   else
-      print *, 'Invalid variables file'
-   endif
+   call write_solution(u, delta_r, gamma, nodes)
 
 end program Euler
 
@@ -399,3 +366,62 @@ subroutine write_solution(u, delta_r, gamma, nodes)
    return
 
 end subroutine write_solution
+
+subroutine read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
+                          lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, ndim)
+   implicit none
+
+!---------------------------------------------------------------------------------
+! GLOBALS VARIABLES
+   integer, intent(OUT) :: nodes, order, lim_choice, ndim
+   double precision, intent(OUT) :: gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r
+   double precision, intent(OUT) :: r_mid, output_t, CFL
+!---------------------------------------------------------------------------------
+
+   open (unit=10, file='variables.data', status='old', form='formatted')
+
+   read (10, *) nodes
+   read (10, *) r_min
+   read (10, *) r_max
+   read (10, *) gamma
+   read (10, *) cfl
+   read (10, *) output_t
+   read (10, *) order
+   read (10, *) lim_choice
+   read (10, *) rho_l
+   read (10, *) u_l
+   read (10, *) p_l
+   read (10, *) rho_r
+   read (10, *) u_r
+   read (10, *) p_r
+   read (10, *) r_mid
+   read (10, *) ndim
+
+   close (10)
+
+end subroutine read_variables
+
+subroutine validate_variables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
+   implicit none
+
+!---------------------------------------------------------------------------------
+! GLOBALS VARIABLES
+   integer, intent(IN) :: nodes, order, lim_choice
+   double precision, intent(IN) :: r_min, r_max, r_mid, output_t, CFL
+!---------------------------------------------------------------------------------
+! LOCAL VARIABLES
+   logical :: run
+!---------------------------------------------------------------------------------
+
+   run = .true.
+   if (nodes < 2) run = .false.
+   if ((r_max - r_min) < 0.0) run = .false.
+   if ((r_mid <= r_min) .or. (r_mid >= r_max)) run = .false.
+   if (cfl < 0) run = .false.
+   if (output_t < 0) run = .false.
+   if ((order /= 1) .and. (order /= 2)) run = .false.
+   if ((lim_choice /= 1) .and. (lim_choice /= 2) .and. (lim_choice /= 3)) run = .false.
+
+   if (.not. run) stop 'Invalid variables file'
+
+end subroutine validate_variables
