@@ -1,0 +1,16 @@
+   2000        nodes
+   0.0         r_min
+   1.0         r_max
+   1.4         gamma (ratio of Specific heats)
+   0.5         CFL condition
+   0.03        Output Time
+   2           order of approximation
+   1           choice of limiter [1] Superbee, [2] Minbee, [3] Van Leer
+   10.0        left density state
+   0.0         left velocity state
+   1000.0      left pressure state
+   1.0         right density state
+   0.0         right velocity state
+   0.1         right pressure state    
+   0.4         position of initial discontinuity
+   3           number of spatial dimensions
