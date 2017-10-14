@@ -1,4 +1,4 @@
-# 1deuler
+# radial-euler
 [![Build Status](https://travis-ci.org/bvwells/radial-euler.svg?branch=master)](https://travis-ci.org/bvwells/radial-euler)
 
 Compressible Euler Equations in radial coordinates solved with finite volume approach.
