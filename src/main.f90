@@ -162,7 +162,7 @@ subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
       a_star_l = (gamma*p_star/rho_star_l)**0.5
       lambda_r(1) = u_star - a_star_l
 
-      a_r = (gamma*p_l/rho_l)**0.5
+      a_r = (gamma*p_r/rho_r)**0.5
       lambda_r(2) = u_r + a_r
 
       u_star = (rho_r*u_r - alpha_tilde(i, 3)*(u_tilde + a_tilde))/(rho_r - alpha_tilde(i, 3))
