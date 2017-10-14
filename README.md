@@ -6,9 +6,9 @@ Compressible Euler Equations in radial coordinates solved with finite volume app
 The compressible Euler equations in radial coordinates are described by the non-linear system of partial differential equations
 
 ```
-ρ_t + (ρu)_x = -(d-1)ρu/r
-(ρu)_t + (ρu^2 + P)_x = -(d-1)ρu^2/r
-E_t + (u(E+P))_x = -(d-1)u(E+P)/r
+ρ_t + (ρu)_r = -(d-1)ρu/r
+(ρu)_t + (ρu^2 + P)_r = -(d-1)ρu^2/r
+E_t + (u(E+P))_r = -(d-1)u(E+P)/r
 ```
 
 where ```ρ```, ```u```, ```P``` and ```E``` are the density, velocity, pressure and energy of the gas being modelled. The equation state for an ideal gas is used which is given by
