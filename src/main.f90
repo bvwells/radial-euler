@@ -105,6 +105,7 @@ subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
    double precision :: a_l, a_r, rho_star_l, rho_star_r, u_star, p_star
    double precision :: a_star_l, a_star_r
    double precision, dimension(1:2) :: lambda_l, lambda_r
+   double precision, external :: Eos
    integer :: i, j
 !---------------------------------------------------------------------------------
    K_tilde = 0; lambda = 0; alpha_tilde = 0; F = 0; delta_u = 0
@@ -116,7 +117,7 @@ subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
       rho_l = u(i - 1, 1); rho_r = u(i, 1)
       u_l = u(i - 1, 2)/rho_l; u_r = u(i, 2)/rho_r
       E_l = u(i - 1, 3); E_r = u(i, 3)
-      p_l = (gamma - 1.0)*(E_l - 0.5*rho_l*(u_l**2)); p_r = (gamma - 1.0)*(E_r - 0.5*rho_r*(u_r**2))
+      p_l = Eos(u(i-1, :), gamma); p_r = Eos(u(i, :), gamma)
       H_l = (E_l + P_l)/rho_l; H_r = (E_r + P_r)/rho_r
 
       delta_u(1) = u(i, 1) - u(i - 1, 1)
@@ -180,9 +181,6 @@ subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
       F(i, 1) = 0.5*(u_tilde*(rho_l + rho_r))
       F(i, 2) = 0.5*(u_tilde*(rho_l*u_l + rho_r*u_r) + p_l + p_r)
       F(i, 3) = 0.5*(u_tilde*(E_l + E_r) + u_l*p_l + u_r*p_r)
-
-      delta_u = 0; u_tilde = 0; H_tilde = 0; rho_l = 0; E_l = 0; u_l = 0; H_l = 0; p_l = 0
-      rho_r = 0; E_r = 0; u_r = 0; H_r = 0; p_r = 0; a_tilde = 0
    end do
 
    alpha_tilde(-1, :) = 0
@@ -249,6 +247,7 @@ subroutine ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
 !--------------------------------------------------------------------------------
    double precision, dimension(1:3) :: uold
    double precision :: p, r
+   double precision, external :: Eos
    integer :: i
 !--------------------------------------------------------------------------------
    p = 0; r = 0
@@ -256,7 +255,7 @@ subroutine ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
 
       r = 0.5*delta_r + i*delta_r
       
-      p = (gamma - 1.0)*(u(i, 3) - 0.5*((u(i, 2)**2)/u(i, 1)))
+      p = Eos(u(i, :), gamma)
       
       uold(1) = u(i, 1)
       uold(2) = u(i, 2)
@@ -290,12 +289,13 @@ subroutine adaptive_time_step(delta_t, u, delta_r, nodes, gamma, CFL)
 ! LOCAL VARIABLES
    double precision, dimension(-1:nodes) :: P, v
    double precision :: a_l, a_r, max_lambda
+   double precision, external :: Eos
    integer :: j
 !--------------------------------------------------------------------------------
    max_lambda = 0; P = 0; v = 0
 
    do j = -1, nodes
-      p(j) = (gamma - 1.0)*(u(j, 3) - (0.5*(u(j, 2)**2)/u(j, 1)))
+      p(j) = Eos(u(j, :), gamma)
       v(j) = u(j, 2)/u(j, 1)
    end do
 
@@ -343,6 +343,38 @@ double precision function limiter(r, choice)
 
 end function limiter
 
+subroutine FluxFunction(State, Flux, Gamma)
+   implicit none
+!-------------------------------------------------------------------------------
+   double precision, intent(in)  :: State(3), Gamma
+   double precision, intent(out) :: Flux(3)
+   double precision, external :: Eos
+!-------------------------------------------------------------------------------
+   Flux(1) = State(2)
+   Flux(2) = State(2)*State(2)/State(1) + Eos(State, Gamma)
+   Flux(3) = (State(2)/State(1))*(State(3) + Eos(State, Gamma))
+
+end subroutine FluxFunction
+
+function Eos(State, Gamma) Result(Pressure)
+   implicit none
+!-------------------------------------------------------------------------------
+   double precision, intent(in) :: State(3), Gamma
+   double precision :: Pressure
+!-------------------------------------------------------------------------------
+
+! Relationships:
+! --------------
+! Pressure:         P = (Gamma-1)*(E-0.5*Rho*u^2)
+! Enthalpy:         H = (E+P)/Rho = h+0.5*u^2
+! Speed:            c = Gamma*P/Rho  = (Gamma-1)*(H-0.5*u^2)
+! Internal energy:  e = E/Rho
+
+   Pressure = (Gamma - 1d0)*(State(3) - 0.5d0*State(2)*State(2)/State(1))
+
+   return
+end function Eos
+
 subroutine write_solution(u, delta_r, gamma, nodes)
 
    implicit none
@@ -352,6 +384,7 @@ subroutine write_solution(u, delta_r, gamma, nodes)
    integer, intent(IN) :: nodes
    double precision, intent(IN), dimension(-1:nodes, 1:3) :: u
    double precision, intent(IN) :: delta_r, gamma
+   double precision, external :: Eos
 !---------------------------------------------------------------------------------
 ! LOCAL VARIABLES
    character(LEN=10)::G
@@ -362,7 +395,7 @@ subroutine write_solution(u, delta_r, gamma, nodes)
 
    open (unit=20, file='exact.m')
    do i = 0, nodes - 1
-      p = (gamma - 1.0)*(u(i, 3) - 0.5*(u(i, 2)**2)/u(i, 1))
+      p = Eos(u(i,:),gamma)
       e = P/((gamma - 1.0)*u(i, 1))
       write (20, G) (0.5*delta_r + i*delta_r), u(i, 1), u(i, 2)/u(i, 1), P, e
       p = 0; e = 0
