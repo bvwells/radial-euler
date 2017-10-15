@@ -11,8 +11,7 @@ The compressible Euler equations in radial coordinates are described by the non-
 E_t + (u(E+P))_r = -(d-1)u(E+P)/r
 ```
 
-where ```ρ```, ```u```, ```P``` and ```E``` are the density, velocity, pressure and energy of the gas being modelled. The equation state for an ideal gas is used which is given by
-
+where ```ρ```, ```u```, ```P``` and ```E``` are the density, velocity, pressure and energy of the gas being modelled. The parameter ```d``` denotes the dimension of the problem. Values from one to three equate to cartesian, cylindrical and sphericl coordinates respectively. The equation of state for an ideal gas is used to close the system and is given by
 ```
 E=P/(1-γ) + 0.5ρv^2
 ```
