@@ -14,16 +14,16 @@ program Euler
    double precision :: delta_t, delta_r, r_mid, T, output_t, CFL, CFL_step
 !---------------------------------------------------------------------------------
 
-   call read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
+   call ReadVariables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
                        lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, alpha)
 
-   call validate_variables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
+   call ValidateVariables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
 
    T = 0; count = 1
    allocate (u(-1:nodes, 1:3))
    u = 0; delta_r = 0
 
-   call initial_conditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r, nodes, r_mid)
+   call InitialConditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r, nodes, r_mid)
 
    do while (t < output_t)
 
@@ -34,7 +34,7 @@ program Euler
       endif
       count = count + 1
 
-      call adaptive_time_step(delta_t, u, delta_r, nodes, gamma, CFL_step)
+      call AdaptiveTimeStep(delta_t, u, delta_r, nodes, gamma, CFL_step)
 
       if (T + delta_t > output_T) then
          delta_t = output_T - T
@@ -43,17 +43,17 @@ program Euler
       T = T + delta_t
       print *, T, delta_t
 
-      call Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
+      call RiemannSolver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
 
-      call ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
+      call ODESolver(u, delta_r, gamma, delta_t, nodes, alpha)
 
    end do
 
-   call write_solution(u, delta_r, gamma, nodes)
+   call WriteSolution(u, delta_r, gamma, nodes)
 
 end program Euler
 
-subroutine initial_conditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r, nodes, r_mid)
+subroutine InitialConditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, rho_r, u_r, p_r, nodes, r_mid)
 
    implicit none
 !---------------------------------------------------------------------------------
@@ -83,9 +83,9 @@ subroutine initial_conditions(u, delta_r, gamma, r_min, r_max, rho_l, u_l, p_l, 
 
    return
 
-end subroutine initial_conditions
+end subroutine InitialConditions
 
-subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
+subroutine RiemannSolver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
 
    implicit none
 !---------------------------------------------------------------------------------
@@ -235,9 +235,9 @@ subroutine Riemann_solver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
 
    return
 
-end subroutine Riemann_solver
+end subroutine RiemannSolver
 
-subroutine ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
+subroutine ODESolver(u, delta_r, gamma, delta_t, nodes, alpha)
 
    implicit none
 !--------------------------------------------------------------------------------
@@ -274,9 +274,9 @@ subroutine ODE_solver(u, delta_r, gamma, delta_t, nodes, alpha)
 
    return
 
-end subroutine ODE_solver
+end subroutine ODESolver
 
-subroutine adaptive_time_step(delta_t, u, delta_r, nodes, gamma, CFL)
+subroutine AdaptiveTimeStep(delta_t, u, delta_r, nodes, gamma, CFL)
 
    implicit none
 !--------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ subroutine adaptive_time_step(delta_t, u, delta_r, nodes, gamma, CFL)
 
    return
 
-end subroutine adaptive_time_step
+end subroutine AdaptiveTimeStep
 
 double precision function limiter(r, choice)
 
@@ -375,7 +375,7 @@ function Eos(State, Gamma) Result(Pressure)
    return
 end function Eos
 
-subroutine write_solution(u, delta_r, gamma, nodes)
+subroutine WriteSolution(u, delta_r, gamma, nodes)
 
    implicit none
 
@@ -404,9 +404,9 @@ subroutine write_solution(u, delta_r, gamma, nodes)
 
    return
 
-end subroutine write_solution
+end subroutine WriteSolution
 
-subroutine read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
+subroutine ReadVariables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
                           lim_choice, rho_l, u_l, p_l, rho_r, u_r, p_r, r_mid, alpha)
    implicit none
 
@@ -438,9 +438,9 @@ subroutine read_variables(nodes, r_min, r_max, gamma, cfl, output_t, order, &
 
    close (10)
 
-end subroutine read_variables
+end subroutine ReadVariables
 
-subroutine validate_variables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
+subroutine ValidateVariables(nodes, r_min, r_max, r_mid, output_t, cfl, order, lim_choice)
    implicit none
 
 !---------------------------------------------------------------------------------
@@ -463,4 +463,4 @@ subroutine validate_variables(nodes, r_min, r_max, r_mid, output_t, cfl, order, 
 
    if (.not. run) stop 'Invalid variables file'
 
-end subroutine validate_variables
+end subroutine ValidateVariables
