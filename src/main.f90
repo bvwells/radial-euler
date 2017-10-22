@@ -99,7 +99,7 @@ subroutine RiemannSolver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
    double precision, dimension(0:nodes, 1:3) :: lambda, F
    double precision, dimension(-1:nodes + 1, 1:3) :: alpha_tilde
    double precision, dimension(1:3) :: delta_u, limit
-   double precision, external :: limiter
+   double precision, external :: Limiter
    double precision :: rho_l, u_l, E_l, p_l, H_l, rho_r, u_r, E_r, p_r, H_r
    double precision :: u_tilde, H_tilde, a_tilde, theta
    double precision :: a_l, a_r, rho_star_l, rho_star_r, u_star, p_star
@@ -204,7 +204,7 @@ subroutine RiemannSolver(u, delta_r, nodes, gamma, delta_t, order, lim_choice)
                   theta = 1.0
                endif
             endif
-            limit(j) = limiter(theta, lim_choice)
+            limit(j) = Limiter(theta, lim_choice)
             theta = 0
          end do
       endif
@@ -317,7 +317,7 @@ subroutine AdaptiveTimeStep(delta_t, u, delta_r, nodes, gamma, CFL)
 
 end subroutine AdaptiveTimeStep
 
-double precision function limiter(r, choice)
+double precision function Limiter(r, choice)
 
    implicit none
 !---------------------------------------------------------------------------------
@@ -325,6 +325,7 @@ double precision function limiter(r, choice)
    integer, intent(IN) :: choice
    double precision, intent(IN) :: r
 !---------------------------------------------------------------------------------
+   limiter = 0.0
 
    if (choice == 1) then
       ! superbee limiter
@@ -341,7 +342,7 @@ double precision function limiter(r, choice)
       endif
    endif
 
-end function limiter
+end function Limiter
 
 subroutine FluxFunction(State, Flux, Gamma)
    implicit none
